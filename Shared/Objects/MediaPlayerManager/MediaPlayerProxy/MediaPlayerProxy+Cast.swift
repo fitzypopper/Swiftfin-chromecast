@@ -8,6 +8,7 @@
 
 import Combine
 import Defaults
+import FactoryKit
 import Foundation
 import GoogleCast
 import JellyfinAPI

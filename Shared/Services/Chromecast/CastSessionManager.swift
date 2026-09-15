@@ -28,6 +28,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
     @Published private(set) var availableDeviceCount: UInt = 0
 
     /// The current Cast session, non-nil when connected to a device.
+    @Published
     private(set) var currentSession: GCKCastSession?
 
     // MARK: - Singleton
