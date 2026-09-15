@@ -58,21 +58,20 @@ jobs:
             -scheme Swiftfin \
             -destination 'generic/platform=iOS'
 
+      - name: Install xcpretty
+        run: gem install xcpretty
+
       - name: Build (no codesign)
-        uses: nick-fields/retry@v2
-        with:
-          max_attempts: 3
-          retry_on: error
-          timeout_minutes: 60
-          command: |
-            xcodebuild build \
-              -project Swiftfin.xcodeproj \
-              -scheme Swiftfin \
-              -destination 'generic/platform=iOS' \
-              -configuration Debug \
-              CODE_SIGN_IDENTITY="" \
-              CODE_SIGNING_REQUIRED=NO \
-              CODE_SIGNING_ALLOWED=NO \
-              ONLY_ACTIVE_ARCH=YES \
-              -skipMacroValidation \
-              | xcpretty || true
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project Swiftfin.xcodeproj \
+            -scheme Swiftfin \
+            -destination 'generic/platform=iOS' \
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            ONLY_ACTIVE_ARCH=YES \
+            -skipMacroValidation \
+            | xcpretty
