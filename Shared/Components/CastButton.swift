@@ -28,7 +28,7 @@ struct CastButton: View {
             }
         } label: {
             Image(systemName: sessionManager.isConnected ? "play.fill.rectangle" : "rectangle.fill.on.rectangle.fill")
-                .foregroundStyle(sessionManager.isConnected ? .jellyfinPurple : .secondary)
+                .foregroundStyle(sessionManager.isConnected ? Color.jellyfinPurple : Color.secondary)
                 .font(.title3)
         }
         .accessibilityLabel(
