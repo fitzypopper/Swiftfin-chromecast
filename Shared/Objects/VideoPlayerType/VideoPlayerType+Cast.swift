@@ -22,26 +22,45 @@ extension VideoPlayerType {
     /// requirements for container format and streaming protocol.
     @ArrayBuilder<DirectPlayProfile>
     static var _castDirectPlayProfiles: [DirectPlayProfile] {
-        DirectPlayProfile(
-            container: "mp4",
-            codec: "h264",
-            audioCodec: "aac,ac3,eac3"
-        )
-        DirectPlayProfile(
-            container: "mp4",
-            codec: "hevc",
-            audioCodec: "aac,ac3,eac3"
-        )
-        DirectPlayProfile(
-            container: "webm",
-            codec: "vp8,vp9",
-            audioCodec: "opus,vorbis"
-        )
-        DirectPlayProfile(
-            container: "mkv",
-            codec: "h264,hevc",
-            audioCodec: "aac,ac3,eac3,opus,vorbis"
-        )
+        DirectPlayProfile(type: .video) {
+            AudioCodec.aac
+            AudioCodec.ac3
+            AudioCodec.eac3
+        } videoCodecs: {
+            VideoCodec.h264
+        } containers: {
+            MediaContainer.mp4
+        }
+        DirectPlayProfile(type: .video) {
+            AudioCodec.aac
+            AudioCodec.ac3
+            AudioCodec.eac3
+        } videoCodecs: {
+            VideoCodec.hevc
+        } containers: {
+            MediaContainer.mp4
+        }
+        DirectPlayProfile(type: .video) {
+            AudioCodec.opus
+            AudioCodec.vorbis
+        } videoCodecs: {
+            VideoCodec.vp8
+            VideoCodec.vp9
+        } containers: {
+            MediaContainer.webm
+        }
+        DirectPlayProfile(type: .video) {
+            AudioCodec.aac
+            AudioCodec.ac3
+            AudioCodec.eac3
+            AudioCodec.opus
+            AudioCodec.vorbis
+        } videoCodecs: {
+            VideoCodec.h264
+            VideoCodec.hevc
+        } containers: {
+            MediaContainer.mkv
+        }
     }
 
     @ArrayBuilder<TranscodingProfile>
