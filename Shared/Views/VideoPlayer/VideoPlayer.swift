@@ -46,6 +46,10 @@ struct VideoPlayer: View {
             self._proxy = .init(wrappedValue: MPVMediaPlayerProxy())
         case .native, .vlc:
             self._proxy = .init(wrappedValue: VLCMediaPlayerProxy())
+        #if canImport(GoogleCast)
+        case .cast:
+            self._proxy = .init(wrappedValue: CastMediaPlayerProxy())
+        #endif
         }
     }
 

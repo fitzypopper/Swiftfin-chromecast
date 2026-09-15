@@ -20,6 +20,10 @@ extension VideoPlayerType {
             Self._nativeCodecProfiles
         case .vlc, .mpv:
             Self._vlcCodecProfiles
+        #if canImport(GoogleCast)
+        case .cast:
+            Self._castCodecProfiles
+        #endif
         }
     }
 

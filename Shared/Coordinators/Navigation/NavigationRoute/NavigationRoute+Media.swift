@@ -99,6 +99,10 @@ struct VideoPlayerViewShim: View {
                 NativeVideoPlayer()
             case .vlc, .mpv:
                 VideoPlayer()
+            #if canImport(GoogleCast)
+            case .cast:
+                VideoPlayer()
+            #endif
             }
         }
         .colorScheme(.dark) // use over `preferredColorScheme(.dark)` to not have destination change

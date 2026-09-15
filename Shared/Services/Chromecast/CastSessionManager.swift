@@ -18,7 +18,7 @@ import SwiftUI
 /// Wraps `GCKCastContext` and `GCKSessionManager` to provide a SwiftUI-friendly
 /// interface for casting to Chromecast devices on the local network.
 @MainActor
-final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerListener {
+final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerListener, GCKDiscoveryManagerListener {
 
     // MARK: - Published State
 
@@ -41,6 +41,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
 
         let context = GCKCastContext.sharedInstance()
         context.sessionManager.addListener(self)
+        context.discoveryManager.addListener(self)
         context.discoveryManager.startDiscovery()
     }
 
@@ -48,8 +49,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
 
     /// Launches the Jellyfin Cast receiver on the specified device.
     func castTo(device: GCKDevice) {
-        let context = GCKCastContext.sharedInstance()
-        context.sessionManager.startSession(with: device)
+        GCKCastContext.sharedInstance().sessionManager.startSession(with: device)
     }
 
     /// Disconnects from the current Cast session.
@@ -91,7 +91,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
     nonisolated func sessionManager(
         _ sessionManager: GCKSessionManager,
         didSuspend session: GCKSession,
-        with reason: GCKSessionEndReason
+        with reason: GCKConnectionSuspendReason
     ) {
         Task { @MainActor in
             self.isConnected = false
@@ -108,11 +108,9 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
         }
     }
 
-    nonisolated func sessionManager(
-        _ sessionManager: GCKSessionManager,
-        didUpdate deviceState: GCKDeviceState,
-        for device: GCKDevice
-    ) {
+    // MARK: - GCKDiscoveryManagerListener
+
+    nonisolated func didUpdateDeviceList() {
         Task { @MainActor in
             self.availableDeviceCount = GCKCastContext.sharedInstance().discoveryManager.deviceCount
         }

@@ -68,12 +68,26 @@ class CastMediaPlayerProxy: VideoMediaPlayerProxy {
     private let castPlayerManager = CastPlayerManager()
     private var managerItemObserver: AnyCancellable?
     private var managerStateObserver: AnyCancellable?
-    private var statusObservation: Any?
+    private var sessionObservation: AnyCancellable?
 
     // MARK: - Init
 
     init() {
-        castPlayerManager.attachToSession(castSessionManager.currentSession!)
+        // Attach to an already-running session if one exists
+        if let session = castSessionManager.currentSession {
+            castPlayerManager.attachToSession(session)
+        }
+
+        // Observe session changes to auto-attach/detach the player manager
+        sessionObservation = castSessionManager.$currentSession
+            .sink { [weak self] session in
+                guard let self else { return }
+                if let session {
+                    self.castPlayerManager.attachToSession(session)
+                } else {
+                    self.castPlayerManager.detachFromSession()
+                }
+            }
     }
 
     // MARK: - Playback Controls
@@ -91,12 +105,12 @@ class CastMediaPlayerProxy: VideoMediaPlayerProxy {
     }
 
     func jumpForward(_ seconds: Duration) {
-        let target = castPlayerManager.currentTime + seconds.timeInterval
+        let target = castPlayerManager.currentTime + seconds.seconds
         castPlayerManager.seek(to: target)
     }
 
     func jumpBackward(_ seconds: Duration) {
-        let target = max(castPlayerManager.currentTime - seconds.timeInterval, 0)
+        let target = max(castPlayerManager.currentTime - seconds.seconds, 0)
         castPlayerManager.seek(to: target)
     }
 
@@ -106,7 +120,7 @@ class CastMediaPlayerProxy: VideoMediaPlayerProxy {
     }
 
     func setSeconds(_ seconds: Duration) {
-        castPlayerManager.seek(to: seconds.timeInterval)
+        castPlayerManager.seek(to: seconds.seconds)
     }
 
     // MARK: - Audio/Subtitle Track Configuration

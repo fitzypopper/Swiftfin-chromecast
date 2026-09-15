@@ -18,7 +18,7 @@ import Logging
 /// Handles loading media items, sending playback commands (play/pause/seek),
 /// and observing remote playback status.
 @MainActor
-final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientListener {
+final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientListener, GCKRequestDelegate {
 
     private let logger = Logger.swiftfin()
 
@@ -75,26 +75,28 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         }
 
         // Load thumbnail if available
-        if let backdropTags = item.baseItem.backdropImageTags,
-           let tag = backdropTags.first
+        if let tag = item.baseItem.backdropImageTags?.first,
+           let itemID = item.baseItem.id
         {
-            let urlString = "\(userSession.client.serverURL)/Items/\(item.baseItem.id ?? "")/Images/Backdrop?tag=\(tag)&maxWidth=1920&maxHeight=1080"
+            let urlString = "\(userSession.client.configuration.url)/Items/\(itemID)/Images/Backdrop?tag=\(tag)&maxWidth=1920&maxHeight=1080"
             if let imageURL = URL(string: urlString) {
-                let image = GCKImage(url: imageURL, width: 1920, height: 1080)
-                mediaMetadata.addImage(image)
+                mediaMetadata.addImage(GCKImage(url: imageURL, width: 1920, height: 1080))
             }
         }
 
         // Build media info
         let mediaInfoBuilder = GCKMediaInformationBuilder(contentURL: streamURL)
-        mediaInfoBuilder.streamType = item.mediaSource.transcodingURL != nil ? .buffered : .none
+        mediaInfoBuilder.streamType = .buffered
         mediaInfoBuilder.contentType = "video/mp4"
         mediaInfoBuilder.metadata = mediaMetadata
-        let mediaInfo = mediaInfoBuilder.build()
 
-        // Load media directly (not via queue)
-        let startTime = item.baseItem.startPositionTicks.map { Double($0) / 10_000_000.0 } ?? 0
-        let request = remoteMediaClient.loadMedia(mediaInfo, autoplay: true, startTime: startTime)
+        // Load media via the recommended load request API
+        let loadDataBuilder = GCKMediaLoadRequestDataBuilder()
+        loadDataBuilder.mediaInformation = mediaInfoBuilder.build()
+        loadDataBuilder.autoplay = true
+        loadDataBuilder.startTime = item.baseItem.startSeconds?.seconds ?? 0
+
+        let request = remoteMediaClient.loadMedia(with: loadDataBuilder.build())
         request?.delegate = self
     }
 
@@ -113,9 +115,11 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
     }
 
     func seek(to seconds: TimeInterval) {
-        let position = GCKMediaPosition(time: seconds)
-        position.resumeState = .play
-        remoteMediaClient?.seek(to: position)
+        let options = GCKMediaSeekOptions()
+        options.interval = seconds
+        options.relative = false
+        options.resumeState = .play
+        remoteMediaClient?.seek(withOptions: options)
     }
 
     func setVolume(_ volume: Float) {
@@ -125,10 +129,12 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
     // MARK: - GCKRemoteMediaClientListener
 
     nonisolated func remoteMediaClient(
-        _ remoteMediaClient: GCKRemoteMediaClient,
-        didUpdate mediaStatus: GCKMediaStatus
+        _ client: GCKRemoteMediaClient,
+        didUpdate mediaStatus: GCKMediaStatus?
     ) {
         Task { @MainActor in
+            guard let mediaStatus else { return }
+
             self.playerState = mediaStatus.playerState
             self.isPlaying = mediaStatus.playerState == .playing
             self.isBuffering = mediaStatus.playerState == .buffering
@@ -136,22 +142,17 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
             self.duration = mediaStatus.mediaInformation?.streamDuration ?? 0
         }
     }
-}
 
-// MARK: - GCKRequestDelegate
-
-extension CastPlayerManager: GCKRequestDelegate {
+    // MARK: - GCKRequestDelegate
 
     nonisolated func request(
         _ request: GCKRequest,
-        didCompleteWithError error: (any Error)?
+        didFailWithError error: GCKError
     ) {
-        if let error {
-            Task { @MainActor in
-                logger.error("Cast request failed", metadata: [
-                    "error": .string(error.localizedDescription),
-                ])
-            }
+        Task { @MainActor in
+            logger.error("Cast request failed", metadata: [
+                "error": .string(error.localizedDescription),
+            ])
         }
     }
 }

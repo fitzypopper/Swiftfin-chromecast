@@ -73,7 +73,7 @@ extension VideoPlayerType {
     }
 
     @ArrayBuilder<CodecProfile>
-    var _castCodecProfiles: [CodecProfile] {
+    static var _castCodecProfiles: [CodecProfile] {
         CodecProfile(
             container: "mp4,webm,mkv",
             type: .videoVideo
