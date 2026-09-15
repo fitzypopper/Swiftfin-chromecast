@@ -74,7 +74,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=YES \
             -skipMacroValidation \
-            2>&1 | tee build.log | xcpretty
+            2>&1 | tee build.log | xcpretty || true
           status="${PIPESTATUS[0]}"
           # Print the raw undefined-symbol block so linker errors are not
           # swallowed by xcpretty's trimmed output.
