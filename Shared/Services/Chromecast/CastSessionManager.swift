@@ -49,10 +49,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
     /// Launches the Jellyfin Cast receiver on the specified device.
     func castTo(device: GCKDevice) {
         let context = GCKCastContext.sharedInstance()
-        let sessionOptions: [String: Any] = [
-            GCKCastOptions.autolaunchOnConnect: false,
-        ]
-        context.sessionManager.startSession(with: device, sessionOptions: sessionOptions)
+        context.sessionManager.startSession(with: device)
     }
 
     /// Disconnects from the current Cast session.

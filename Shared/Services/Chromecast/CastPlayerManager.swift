@@ -10,7 +10,6 @@ import Foundation
 import GoogleCast
 import JellyfinAPI
 import Logging
-import SwiftUI
 
 #if canImport(GoogleCast)
 
@@ -29,7 +28,7 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
     @Published private(set) var currentTime: TimeInterval = 0
     @Published private(set) var duration: TimeInterval = 0
     @Published private(set) var isBuffering = false
-    @Published private(set) var mediaStatus: GCKMediaPlayerStatus = .unknown
+    @Published private(set) var playerState: GCKMediaPlayerState = .unknown
 
     /// The remote media client for the current session.
     private var remoteMediaClient: GCKRemoteMediaClient?
@@ -49,15 +48,12 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         currentTime = 0
         duration = 0
         isBuffering = false
+        playerState = .unknown
     }
 
     // MARK: - Media Loading
 
     /// Loads a Jellyfin media item onto the Chromecast device.
-    ///
-    /// - Parameters:
-    ///   - item: The `MediaPlayerItem` containing the stream URL and metadata.
-    ///   - userSession: The current user session for building authenticated URLs.
     func loadMedia(from item: MediaPlayerItem, userSession: UserSession) async throws {
         guard let remoteMediaClient else {
             logger.error("No remote media client available")
@@ -79,9 +75,14 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         }
 
         // Load thumbnail if available
-        if let imageURL = item.baseItem.getBackdropImageURL(baseUrl: userSession.client.serverURL) {
-            let image = GCKImage(url: imageURL, width: 1920, height: 1080)
-            mediaMetadata.addImage(image)
+        if let backdropTags = item.baseItem.backdropImageTags,
+           let tag = backdropTags.first
+        {
+            let urlString = "\(userSession.client.serverURL)/Items/\(item.baseItem.id ?? "")/Images/Backdrop?tag=\(tag)&maxWidth=1920&maxHeight=1080"
+            if let imageURL = URL(string: urlString) {
+                let image = GCKImage(url: imageURL, width: 1920, height: 1080)
+                mediaMetadata.addImage(image)
+            }
         }
 
         // Build media info
@@ -91,20 +92,9 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         mediaInfoBuilder.metadata = mediaMetadata
         let mediaInfo = mediaInfoBuilder.build()
 
-        // Build media queue item
-        let queueItem = GCKMediaQueueItemBuilder()
-        queueItem.mediaInformation = mediaInfo
-        queueItem.autoplay = true
-        queueItem.startTime = item.baseItem.startSeconds.map { $0.timeInterval } ?? 0
-        let queueItemBuilt = queueItem.build()
-
-        // Load media
-        let request = remoteMediaClient.mediaQueue.insert(
-            queueItems: [queueItemBuilt],
-            at: 0,
-            autoplay: true,
-            startTime: queueItemBuilt.startTime
-        )
+        // Load media directly (not via queue)
+        let startTime = item.baseItem.startPositionTicks.map { Double($0) / 10_000_000.0 } ?? 0
+        let request = remoteMediaClient.loadMedia(mediaInfo, autoplay: true, startTime: startTime)
         request?.delegate = self
     }
 
@@ -123,14 +113,13 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
     }
 
     func seek(to seconds: TimeInterval) {
-        let position = GCKMediaPosition()
-        position.setTime(seconds)
+        let position = GCKMediaPosition(time: seconds)
         position.resumeState = .play
         remoteMediaClient?.seek(to: position)
     }
 
     func setVolume(_ volume: Float) {
-        remoteMediaClient?.setStreamVolume(volume)
+        GCKCastContext.sharedInstance().sessionManager.currentSession?.setDeviceVolume(volume)
     }
 
     // MARK: - GCKRemoteMediaClientListener
@@ -140,11 +129,29 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         didUpdate mediaStatus: GCKMediaStatus
     ) {
         Task { @MainActor in
-            self.mediaStatus = mediaStatus.playerState
+            self.playerState = mediaStatus.playerState
             self.isPlaying = mediaStatus.playerState == .playing
             self.isBuffering = mediaStatus.playerState == .buffering
             self.currentTime = mediaStatus.streamPosition
             self.duration = mediaStatus.mediaInformation?.streamDuration ?? 0
+        }
+    }
+}
+
+// MARK: - GCKRequestDelegate
+
+extension CastPlayerManager: GCKRequestDelegate {
+
+    nonisolated func request(
+        _ request: GCKRequest,
+        didCompleteWithError error: (any Error)?
+    ) {
+        if let error {
+            Task { @MainActor in
+                logger.error("Cast request failed", metadata: [
+                    "error": .string(error.localizedDescription),
+                ])
+            }
         }
     }
 }
