@@ -47,44 +47,56 @@ extension VideoPlayerType {
     @ArrayBuilder<TranscodingProfile>
     static var _castTranscodingProfiles: [TranscodingProfile] {
         TranscodingProfile(
-            container: .mp4,
-            codec: .h264,
-            audioCodec: "aac",
-            maxAudioChannels: 2,
+            isBreakOnNonKeyFrames: true,
+            context: .streaming,
+            enableSubtitlesInManifest: true,
+            maxAudioChannels: "2",
+            minSegments: 2,
+            protocol: MediaStreamProtocol.hls,
             type: .video
-        )
-        TranscodingProfile(
-            container: .hls,
-            codec: .h264,
-            audioCodec: "aac",
-            maxAudioChannels: 2,
-            type: .video
-        )
+        ) {
+            AudioCodec.aac
+        } videoCodecs: {
+            VideoCodec.h264
+        } containers: {
+            MediaContainer.mp4
+            MediaContainer.ts
+        }
     }
 
     @ArrayBuilder<SubtitleProfile>
     static var _castSubtitleProfiles: [SubtitleProfile] {
-        SubtitleProfile(format: "srt", deliveryMethod: .hls)
-        SubtitleProfile(format: "ass", deliveryMethod: .hls)
-        SubtitleProfile(format: "ssa", deliveryMethod: .hls)
-        SubtitleProfile(format: "webvtt", deliveryMethod: .hls)
-        SubtitleProfile(format: "subrip", deliveryMethod: .hls)
-        SubtitleProfile(format: "mov_text", deliveryMethod: .hls)
+        SubtitleProfile.build(method: .hls) {
+            SubtitleFormat.subrip
+            SubtitleFormat.ass
+            SubtitleFormat.ssa
+            SubtitleFormat.vtt
+            SubtitleFormat.mov_text
+        }
     }
 
     @ArrayBuilder<CodecProfile>
     static var _castCodecProfiles: [CodecProfile] {
         CodecProfile(
-            container: "mp4,webm,mkv",
-            type: .videoVideo
-        ) {
-            ProfileCondition(
-                condition: .equalsAny,
-                isRequired: false,
-                property: .videoProfile,
-                value: "main,main 10,high"
-            )
-        }
+            codec: VideoCodec.h264.rawValue,
+            type: .video,
+            conditions: {
+                ProfileCondition(
+                    condition: .equalsAny,
+                    isRequired: false,
+                    property: .videoProfile
+                ) {
+                    H264Profile.main
+                    H264Profile.high
+                }
+                ProfileCondition(
+                    condition: .notEquals,
+                    isRequired: false,
+                    property: .isInterlaced,
+                    value: "true"
+                )
+            }
+        )
     }
 }
 
