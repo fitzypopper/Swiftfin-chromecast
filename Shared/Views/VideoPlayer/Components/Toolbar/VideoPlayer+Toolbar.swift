@@ -9,6 +9,10 @@
 import JellyfinAPI
 import SwiftUI
 
+#if canImport(GoogleCast)
+import GoogleCast
+#endif
+
 extension VideoPlayer.PlaybackControls {
 
     struct Toolbar: View {
@@ -70,6 +74,14 @@ extension VideoPlayer.PlaybackControls {
 
                 TitleView(item: manager.item)
                     .frame(maxWidth: .infinity, alignment: .leading)
+
+                #if canImport(GoogleCast)
+                if manager.proxy is CastMediaPlayerProxy {
+                    CastButton()
+                        .frame(width: Self.buttonSize, height: Self.buttonSize)
+                        .modifier(OverlayBarButtonStyleModifier())
+                }
+                #endif
 
                 ActionButtons()
                     .frame(height: Self.buttonSize)

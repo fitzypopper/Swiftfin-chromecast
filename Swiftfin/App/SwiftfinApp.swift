@@ -10,6 +10,10 @@ import PreferencesView
 import SwiftUI
 import UIKit
 
+#if canImport(GoogleCast)
+import GoogleCast
+#endif
+
 @main
 struct SwiftfinApp: App {
 
@@ -22,6 +26,13 @@ struct SwiftfinApp: App {
         UITabBar.appearance().scrollEdgeAppearance = UITabBarAppearance(idiom: .unspecified)
 
         SwiftfinSpotlight().addSwiftfinToSpotlight()
+
+        #if canImport(GoogleCast)
+        let discoveryCriteria = GCKDiscoveryCriteria(applicationID: JellyfinCastReceiverID.stable)
+        let options = GCKCastOptions(discoveryCriteria: discoveryCriteria)
+        options.suspendSessionsWhenBackgrounded = false
+        GCKCastContext.setSharedInstanceWith(options)
+        #endif
     }
 
     var body: some Scene {

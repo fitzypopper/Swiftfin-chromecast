@@ -14,6 +14,9 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
     case native
     case vlc
     case mpv
+    #if canImport(GoogleCast)
+    case cast
+    #endif
 
     var displayTitle: String {
         switch self {
@@ -23,6 +26,10 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
             L10n.vlc
         case .mpv:
             L10n.mpv
+        #if canImport(GoogleCast)
+        case .cast:
+            "Cast"
+        #endif
         }
     }
 
@@ -32,6 +39,10 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
             Self._nativeDirectPlayProfiles
         case .vlc, .mpv:
             Self._vlcDirectPlayProfiles
+        #if canImport(GoogleCast)
+        case .cast:
+            Self._castDirectPlayProfiles
+        #endif
         }
     }
 
@@ -41,6 +52,10 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
             Self._nativeTranscodingProfiles
         case .vlc, .mpv:
             Self._vlcTranscodingProfiles
+        #if canImport(GoogleCast)
+        case .cast:
+            Self._castTranscodingProfiles
+        #endif
         }
     }
 
@@ -50,6 +65,10 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
             Self._nativeSubtitleProfiles
         case .vlc, .mpv:
             Self._vlcSubtitleProfiles
+        #if canImport(GoogleCast)
+        case .cast:
+            Self._castSubtitleProfiles
+        #endif
         }
     }
 
@@ -61,5 +80,9 @@ enum VideoPlayerType: String, CaseIterable, Displayable, SupportedCaseIterable, 
         if Defaults[.Experimental.mpvPlayer] {
             VideoPlayerType.mpv
         }
+
+        #if canImport(GoogleCast)
+        VideoPlayerType.cast
+        #endif
     }
 }
