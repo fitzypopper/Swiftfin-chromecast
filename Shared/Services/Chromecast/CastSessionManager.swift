@@ -25,7 +25,7 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
     @Published private(set) var isConnected = false
     @Published private(set) var isDiscovering = false
     @Published private(set) var connectedDeviceName: String?
-    @Published private(set) var availableDeviceCount = 0
+    @Published private(set) var availableDeviceCount: UInt = 0
 
     /// The current Cast session, non-nil when connected to a device.
     private(set) var currentSession: GCKCastSession?
@@ -40,8 +40,8 @@ final class CastSessionManager: NSObject, ObservableObject, GCKSessionManagerLis
         super.init()
 
         let context = GCKCastContext.sharedInstance()
-        context.sessionManager.addListener(self)
-        context.discoveryManager.addListener(self)
+        context.sessionManager.add(self)
+        context.discoveryManager.add(self)
         context.discoveryManager.startDiscovery()
     }
 

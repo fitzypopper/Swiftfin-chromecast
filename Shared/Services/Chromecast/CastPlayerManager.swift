@@ -97,7 +97,7 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         loadDataBuilder.startTime = item.baseItem.startSeconds?.seconds ?? 0
 
         let request = remoteMediaClient.loadMedia(with: loadDataBuilder.build())
-        request?.delegate = self
+        request.delegate = self
     }
 
     // MARK: - Playback Controls
@@ -119,7 +119,7 @@ final class CastPlayerManager: NSObject, ObservableObject, GCKRemoteMediaClientL
         options.interval = seconds
         options.relative = false
         options.resumeState = .play
-        remoteMediaClient?.seek(withOptions: options)
+        remoteMediaClient?.seek(with: options)
     }
 
     func setVolume(_ volume: Float) {
