@@ -68,7 +68,7 @@ jobs:
             -project Swiftfin.xcodeproj \
             -scheme Swiftfin \
             -destination 'generic/platform=iOS' \
-            -configuration Debug \
+            -configuration Release \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
@@ -87,9 +87,21 @@ jobs:
       - name: Package IPA
         if: success()
         run: |
-          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Debug-iphoneos/Swiftfin iOS.app"
+          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Release-iphoneos/Swiftfin iOS.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "Built app not found at $APP_PATH"
+            find "${{ github.workspace }}/DerivedData/Build/Products" -maxdepth 2 | head -40
+            exit 1
+          fi
+          echo "== BUNDLE CONTENTS =="
+          find "$APP_PATH" -maxdepth 2 | head -60
+          if [ ! -f "$APP_PATH/Info.plist" ]; then
+            echo "ERROR: Info.plist missing from built app bundle"
+            exit 1
+          fi
+          EXEC="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PATH/Info.plist" 2>/dev/null || true)"
+          if [ -z "$EXEC" ] || [ ! -x "$APP_PATH/$EXEC" ]; then
+            echo "ERROR: executable '$EXEC' missing from built app bundle"
             exit 1
           fi
           mkdir -p Payload
