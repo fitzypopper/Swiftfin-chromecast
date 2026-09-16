@@ -73,14 +73,34 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO \
             ONLY_ACTIVE_ARCH=YES \
+            -derivedDataPath "${{ github.workspace }}/DerivedData" \
             -skipMacroValidation \
             2>&1 | tee build.log | xcpretty || true
           status="${PIPESTATUS[0]}"
-          # Print the raw undefined-symbol block so linker errors are not
-          # swallowed by xcpretty's trimmed output.
           if [ "$status" -ne 0 ]; then
             echo "== RAW UNDEFINED SYMBOLS / LINKER OUTPUT =="
             grep -n -A40 'Undefined symbols' build.log || true
             echo "== END RAW OUTPUT =="
           fi
           exit "$status"
+
+      - name: Package IPA
+        if: success()
+        run: |
+          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Debug-iphoneos/Swiftfin iOS.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Built app not found at $APP_PATH"
+            exit 1
+          fi
+          mkdir -p Payload
+          ditto "$APP_PATH" "Payload/Swiftfin iOS.app"
+          ditto -c -k --sequesterRsrc --keepParent Payload Swiftfin.ipa
+          ls -lh Swiftfin.ipa
+
+      - name: Upload IPA
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Swiftfin-chromecast
+          path: Swiftfin.ipa
+          retention-days: 14
