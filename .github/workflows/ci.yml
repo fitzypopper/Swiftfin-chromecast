@@ -61,22 +61,23 @@ jobs:
       - name: Install xcpretty
         run: gem install xcpretty
 
-      - name: Build & Archive (no codesign)
+      - name: Build (no codesign)
         run: |
           set -o pipefail
-          xcodebuild archive \
+          xcodebuild build \
             -project Swiftfin.xcodeproj \
             -scheme Swiftfin \
             -destination 'generic/platform=iOS' \
-            -archivePath "${{ github.workspace }}/Swiftfin.xcarchive" \
-            -configuration Release \
+            -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=YES \
+            -derivedDataPath "${{ github.workspace }}/DerivedData" \
             -skipMacroValidation \
-            2>&1 | tee build.log | xcpretty || true
-          status="${PIPESTATUS[0]}"
+            > build.log 2>&1
+          status=$?
+          tail -200 build.log | xcpretty || true
           if [ "$status" -ne 0 ]; then
             echo "== RAW UNDEFINED SYMBOLS / LINKER OUTPUT =="
             grep -n -A40 'Undefined symbols' build.log || true
@@ -87,13 +88,12 @@ jobs:
       - name: Package IPA
         if: success()
         run: |
-          APP_PATH="$(find "${{ github.workspace }}/Swiftfin.xcarchive/Products/Applications" -name "*.app" -type d 2>/dev/null | head -1)"
-          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-            echo "ERROR: Built .app not found in archive"
-            find "${{ github.workspace }}/Swiftfin.xcarchive" -maxdepth 4 2>/dev/null || true
+          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Debug-iphoneos/Swiftfin iOS.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "Built app not found at $APP_PATH"
+            find "${{ github.workspace }}/DerivedData/Build/Products" -maxdepth 2 | head -40
             exit 1
           fi
-          echo "Found app at: $APP_PATH"
           echo "== BUNDLE CONTENTS =="
           find "$APP_PATH" -maxdepth 2 | head -60
           if [ ! -f "$APP_PATH/Info.plist" ]; then
@@ -105,9 +105,8 @@ jobs:
             echo "ERROR: executable '$EXEC' missing from built app bundle"
             exit 1
           fi
-          APP_NAME="$(basename "$APP_PATH")"
           mkdir -p Payload
-          ditto "$APP_PATH" "Payload/$APP_NAME"
+          ditto "$APP_PATH" "Payload/Swiftfin iOS.app"
           ditto -c -k --sequesterRsrc --keepParent Payload Swiftfin.ipa
           ls -lh Swiftfin.ipa
 
