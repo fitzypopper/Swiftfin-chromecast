@@ -68,10 +68,13 @@ jobs:
             -project Swiftfin.xcodeproj \
             -scheme Swiftfin \
             -destination 'generic/platform=iOS' \
-            -configuration Debug \
+            -configuration Release \
             CODE_SIGN_IDENTITY="" \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_ENTITLEMENTS="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=YES \
+            OTHER_LDFLAGS="$(inherited) -weak_framework SwiftUICore" \
             ONLY_ACTIVE_ARCH=YES \
             -derivedDataPath "${{ github.workspace }}/DerivedData" \
             -skipMacroValidation \
@@ -79,8 +82,10 @@ jobs:
           status=$?
           tail -200 build.log | xcpretty || true
           if [ "$status" -ne 0 ]; then
-            echo "== RAW UNDEFINED SYMBOLS / LINKER OUTPUT =="
-            grep -n -A40 'Undefined symbols' build.log || true
+            echo "== RAW LINKER / BUILD FAILURE OUTPUT =="
+            grep -n -E "error:|cannot link|cannot parse|Undefined symbols|not an allowed client" build.log | tail -30 || true
+            echo "--- last 40 raw lines ---"
+            tail -40 build.log || true
             echo "== END RAW OUTPUT =="
           fi
           exit "$status"
@@ -88,7 +93,7 @@ jobs:
       - name: Package IPA
         if: success()
         run: |
-          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Debug-iphoneos/Swiftfin iOS.app"
+          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Release-iphoneos/Swiftfin iOS.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "Built app not found at $APP_PATH"
             find "${{ github.workspace }}/DerivedData/Build/Products" -maxdepth 2 | head -40
