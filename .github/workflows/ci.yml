@@ -64,6 +64,7 @@ jobs:
       - name: Build (no codesign)
         run: |
           set -o pipefail
+          set +e
           xcodebuild build \
             -project Swiftfin.xcodeproj \
             -scheme Swiftfin \
@@ -78,17 +79,23 @@ jobs:
             ONLY_ACTIVE_ARCH=YES \
             -derivedDataPath "${{ github.workspace }}/DerivedData" \
             -skipMacroValidation \
-            > build.log 2>&1
-          status=$?
-          tail -200 build.log | xcpretty || true
+            2>&1 | tee build.log | xcpretty
+          status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
-            echo "== RAW LINKER / BUILD FAILURE OUTPUT =="
-            grep -n -E "error:|cannot link|cannot parse|Undefined symbols|not an allowed client" build.log | tail -30 || true
-            echo "--- last 40 raw lines ---"
+            echo "== RAW ERROR LINES =="
+            grep -n -E "error:|cannot link|cannot parse|not an allowed client|Undefined symbols|codesign|entitlement" build.log | tail -30 || true
+            echo "== TAIL 40 RAW =="
             tail -40 build.log || true
-            echo "== END RAW OUTPUT =="
           fi
           exit "$status"
+
+      - name: Upload build log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          retention-days: 14
 
       - name: Package IPA
         if: success()
