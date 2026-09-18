@@ -25,6 +25,7 @@ jobs:
 
     env:
       XCODE_VERSION: "26.6"
+      DERIVED_DATA_PATH: "${{ runner.temp }}/DerivedData"
 
     steps:
       - name: Checkout
@@ -56,7 +57,8 @@ jobs:
           xcodebuild -resolvePackageDependencies \
             -project Swiftfin.xcodeproj \
             -scheme Swiftfin \
-            -destination 'generic/platform=iOS'
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "${{ env.DERIVED_DATA_PATH }}"
 
       - name: Install xcpretty
         run: gem install xcpretty
@@ -76,7 +78,7 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=YES \
             ONLY_ACTIVE_ARCH=YES \
-            -derivedDataPath "${{ github.workspace }}/DerivedData" \
+            -derivedDataPath "${{ env.DERIVED_DATA_PATH }}" \
             -skipMacroValidation \
             2>&1 | tee build.log | xcpretty
           status=${PIPESTATUS[0]}
@@ -99,10 +101,10 @@ jobs:
       - name: Package IPA
         if: success()
         run: |
-          APP_PATH="${{ github.workspace }}/DerivedData/Build/Products/Release-iphoneos/Swiftfin iOS.app"
+          APP_PATH="${{ env.DERIVED_DATA_PATH }}/Build/Products/Release-iphoneos/Swiftfin iOS.app"
           if [ ! -d "$APP_PATH" ]; then
             echo "Built app not found at $APP_PATH"
-            find "${{ github.workspace }}/DerivedData/Build/Products" -maxdepth 2 | head -40
+            find "${{ env.DERIVED_DATA_PATH }}/Build/Products" -maxdepth 2 | head -40
             exit 1
           fi
           echo "== BUNDLE CONTENTS =="
