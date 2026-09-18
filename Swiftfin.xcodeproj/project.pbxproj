@@ -120,6 +120,7 @@
 		E1E2D7BF2E3FD936004E2E5F /* Transmission in Frameworks */ = {isa = PBXBuildFile; productRef = E1E2D7BE2E3FD936004E2E5F /* Transmission */; };
 		E1FADDF12E84B63600FB310E /* StatefulMacros in Frameworks */ = {isa = PBXBuildFile; productRef = E1FADDF02E84B63600FB310E /* StatefulMacros */; };
 		E2F0GCK12EF60000047C2A1 /* GoogleCast.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1B2AB9628808CDF0072B3B9 /* GoogleCast.xcframework */; };
+		E2F0GTM32EF60000047C2B3 /* GTMSessionFetcher in Frameworks */ = {isa = PBXBuildFile; productRef = E2F0GTM22EF60000047C2B2 /* GTMSessionFetcher */; };
 		E2F0GCK22EF60000047C2A2 /* GoogleCast.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1B2AB9628808CDF0072B3B9 /* GoogleCast.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E324C9CF2F8822F8004282DC /* Defaults in Frameworks */ = {isa = PBXBuildFile; productRef = E13DD3D227168E65009D4DAF /* Defaults */; };
 /* End PBXBuildFile section */
@@ -337,6 +338,7 @@ E150B7D12DFF2E7C00DC7CF4 /* XcodeConfig */ = {isa = PBXFileSystemSynchronizedRoo
 			buildActionMask = 2147483647;
 			files = (
 				E2F0GCK12EF60000047C2A1 /* GoogleCast.xcframework in Frameworks */,
+				E2F0GTM32EF60000047C2B3 /* GTMSessionFetcher in Frameworks */,
 				E12B93072947CD0F00CE0BD9 /* Pulse in Frameworks */,
 				E12CDBBF2FFB592A00828742 /* CollectionVGrid in Frameworks */,
 				62666E3E27E503FA00EC0ECD /* MediaAccessibility.framework in Frameworks */,
@@ -632,6 +634,7 @@ E150B7D12DFF2E7C00DC7CF4 /* XcodeConfig */ = {isa = PBXFileSystemSynchronizedRoo
 				E12CDBBB2FFB532800828742 /* CollectionVGrid */,
 				E12CDBBE2FFB592A00828742 /* CollectionVGrid */,
 				E144DBF830464F3A009B85B5 /* SwiftVLC */,
+				E2F0GTM22EF60000047C2B2 /* GTMSessionFetcher */,
 			);
 			productName = JellyfinPlayer;
 			productReference = 5377CBF1263B596A003A4E83 /* Swiftfin iOS.app */;
@@ -775,6 +778,7 @@ E150B7D12DFF2E7C00DC7CF4 /* XcodeConfig */ = {isa = PBXFileSystemSynchronizedRoo
 				E1240A272FEA4F69004E6588 /* XCRemoteSwiftPackageReference "StatefulMacro" */,
 				E12CDBBD2FFB592A00828742 /* XCRemoteSwiftPackageReference "CollectionVGrid" */,
 				E144DBF730464F3A009B85B5 /* XCRemoteSwiftPackageReference "SwiftVLC" */,
+				E2F0GTM12EF60000047C2B1 /* XCRemoteSwiftPackageReference "gtm-session-fetcher" */,
 			);
 			productRefGroup = 5377CBF2263B596A003A4E83 /* Products */;
 			projectDirPath = "";
@@ -1401,6 +1405,14 @@ E150B7D12DFF2E7C00DC7CF4 /* XcodeConfig */ = {isa = PBXFileSystemSynchronizedRoo
 				version = 1.0.0;
 			};
 		};
+		E2F0GTM12EF60000047C2B1 /* XCRemoteSwiftPackageReference "gtm-session-fetcher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/gtm-session-fetcher";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
 		E145EB492BE16849003BF6F3 /* XCRemoteSwiftPackageReference "keychain-swift" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/evgenyneu/keychain-swift";
@@ -1687,6 +1699,11 @@ E150B7D12DFF2E7C00DC7CF4 /* XcodeConfig */ = {isa = PBXFileSystemSynchronizedRoo
 			isa = XCSwiftPackageProductDependency;
 			package = E144DBF730464F3A009B85B5 /* XCRemoteSwiftPackageReference "SwiftVLC" */;
 			productName = SwiftVLC;
+		};
+		E2F0GTM22EF60000047C2B2 /* GTMSessionFetcher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E2F0GTM12EF60000047C2B1 /* XCRemoteSwiftPackageReference "gtm-session-fetcher" */;
+			productName = GTMSessionFetcher;
 		};
 		E145EB4A2BE16849003BF6F3 /* KeychainSwift */ = {
 			isa = XCSwiftPackageProductDependency;
