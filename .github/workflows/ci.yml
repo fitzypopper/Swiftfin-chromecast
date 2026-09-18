@@ -25,11 +25,15 @@ jobs:
 
     env:
       XCODE_VERSION: "26.6"
-      DERIVED_DATA_PATH: "${{ runner.temp }}/DerivedData"
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set derived data path
+        run: |
+          echo "DERIVED_DATA_PATH=$RUNNER_TEMP/DerivedData" >> "$GITHUB_ENV"
+          echo "Derived data: $RUNNER_TEMP/DerivedData"
 
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
